@@ -14,7 +14,7 @@
 <body>
   <div id="app">
     <!-- Header -->
-    <header class="glass-header">
+    <header class="soft-header">
       <div class="header-left">
         <div class="logo-box">
           <i class="fa-solid fa-gamepad"></i>
@@ -39,10 +39,10 @@
     <main class="dashboard-layout">
       
       <!-- Sidebar / Personas -->
-      <aside class="sidebar glass-panel">
+      <aside class="sidebar soft-panel" id="sidebar">
         <div class="panel-header">
-          <h2><i class="fa-solid fa-users-rays"></i> 에이전트 설정</h2>
-          <button class="collapse-btn"><i class="fa-solid fa-chevron-left"></i></button>
+          <h2><i class="fa-solid fa-users-rays"></i> <span>참여 에이전트</span></h2>
+          <button class="icon-btn sm" id="btn-collapse-sidebar"><i class="fa-solid fa-chevron-left" style="transition: transform 0.3s;"></i></button>
         </div>
         
         <div class="agents-container" id="agents-container">
@@ -54,7 +54,7 @@
       <section class="center-stage">
         
         <!-- Input & Control Panel -->
-        <div class="control-panel glass-panel">
+        <div class="control-panel soft-panel">
           <div class="input-header">
             <h3><i class="fa-solid fa-pen-nib"></i> 기획 안건 입력</h3>
             <div class="input-actions">
@@ -75,7 +75,7 @@
         </div>
 
         <!-- Chat / Results Log -->
-        <div class="meeting-log glass-panel">
+        <div class="meeting-log soft-panel">
           <div class="panel-header">
             <h2><i class="fa-solid fa-comments"></i> 실시간 회의 로그</h2>
             <div class="log-actions">
@@ -87,7 +87,7 @@
             <!-- Messages injected by JS -->
             <div class="welcome-message">
               <i class="fa-brands fa-hubspot"></i>
-              <p>안건을 입력하고 회의를 시작하면, 에이전트들이 분석을 시작합니다.</p>
+              <p>기획 안건을 입력하고 회의를 시작하면, 이곳에 실시간 회의 로그가 순차적으로 기록됩니다.</p>
             </div>
           </div>
         </div>
@@ -95,7 +95,7 @@
       </section>
 
       <!-- Right Panel / Summary -->
-      <aside class="summary-panel glass-panel">
+      <aside class="summary-panel soft-panel">
         <div class="panel-header">
           <h2><i class="fa-solid fa-chart-pie"></i> 핵심 요약</h2>
         </div>
@@ -117,7 +117,7 @@
 
     <!-- Settings Modal -->
     <div class="modal-overlay hidden" id="settings-modal">
-      <div class="modal glass-panel">
+      <div class="modal soft-panel">
         <div class="modal-header panel-header">
           <h2><i class="fa-solid fa-sliders"></i> 시스템 설정</h2>
           <button class="icon-btn sm" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>

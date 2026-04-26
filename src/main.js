@@ -138,7 +138,7 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   document.getElementById('chat-container').innerHTML = `
     <div class="welcome-message">
       <i class="fa-brands fa-hubspot"></i>
-      <p>안건을 입력하고 회의를 시작하면, 에이전트들이 분석을 시작합니다.</p>
+      <p>기획 안건을 입력하고 회의를 시작하면, 이곳에 실시간 회의 로그가 순차적으로 기록됩니다.</p>
     </div>
   `;
   document.getElementById('summary-content').innerHTML = `
@@ -174,6 +174,16 @@ document.getElementById('btn-summary').addEventListener('click', async () => {
 
 // Initialize on load
 initAgents();
+
+// Sidebar Collapse Logic
+const btnCollapseSidebar = document.getElementById('btn-collapse-sidebar');
+const sidebar = document.getElementById('sidebar');
+const dashboardLayout = document.querySelector('.dashboard-layout');
+
+btnCollapseSidebar.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  dashboardLayout.classList.toggle('sidebar-collapsed');
+});
 
 // Settings Modal Logic
 const modalOverlay = document.getElementById('settings-modal');
