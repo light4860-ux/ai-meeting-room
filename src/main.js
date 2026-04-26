@@ -20,7 +20,7 @@ function initAgents() {
           <span class="agent-tag">${a.tag}</span>
         </div>
       </div>
-      <textarea class="agent-guide" placeholder="추가 지침 (선택 사항)..."></textarea>
+      <textarea class="agent-guide" placeholder="지침 입력"></textarea>
     </div>
   `).join('');
 
