@@ -1,6 +1,6 @@
 import './style.css';
 
-const agents = [
+const agents =[
   { id: 'sys', name: '수석 시스템 기획자', tag: 'SYSTEM', icon: '<i class="fa-solid fa-gamepad"></i>', desc: '코어 시스템과 밸런스, 구조를 담당합니다.' },
   { id: 'con', name: '콘텐츠 & 라이브 기획자', tag: 'CONTENT', icon: '<i class="fa-solid fa-chess-knight"></i>', desc: '이벤트, 스토리, 신규 던전 등을 기획합니다.' },
   { id: 'ops', name: '운영 & UX 담당자', tag: 'OPS', icon: '<i class="fa-solid fa-chart-line"></i>', desc: '유저 경험(UX)과 서비스 지표를 관리합니다.' }
@@ -99,6 +99,48 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function callGemini(systemPrompt, userMessage) {
+  const apiKey = localStorage.getItem('dnf_gemini_key');
+  const model = localStorage.getItem('dnf_gemini_model')
+    || 'gemini-2.5-flash';
+
+  if(!apiKey) {
+    throw new Error(
+      'API 키가 설정되지 않았습니다. 우측 상단 설정에서 입력해주세요.'
+    );
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: {
+        parts: [{ text: systemPrompt }]
+      },
+      contents:[{
+        role: 'user',
+        parts: [{ text: userMessage }]
+      }],
+      generationConfig: {
+        maxOutputTokens: 4096,
+        temperature: 0.7
+      }
+    })
+  });
+
+  if(!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = err?.error?.message || res.statusText;
+    throw new Error(`API 오류 (${res.status}): ${msg}`);
+  }
+
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text
+    || '응답이 없습니다.';
+}
+
 async function startMeeting() {
   const input = document.getElementById('agenda-input').value.trim();
   if (!input) {
@@ -116,28 +158,58 @@ async function startMeeting() {
   document.getElementById('chat-container').innerHTML = '';
   document.getElementById('summary-content').innerHTML = '';
 
-  const mockResponses = [
-    "시스템 구조상 해당 기획은 서버 부하를 늘릴 수 있으나, 비동기 처리를 도입하면 충분히 가능합니다. 밸런스 조정안은 긍정적으로 검토할 수 있습니다.",
-    "이벤트와 연계하여 스토리라인을 확장하기 좋은 아이디어입니다. 특히 신규 유저의 진입 장벽을 낮추는 튜토리얼 퀘스트로 활용하면 좋겠습니다.",
-    "유저 피드백 데이터와 비교해봤을 때, 긍정적인 반응이 예상됩니다. 다만 UI/UX 측면에서 직관성이 떨어질 수 있어, 플로우 개선이 필요합니다."
-  ];
-
   for (let i = 0; i < agents.length; i++) {
     const agent = agents[i];
-    
-    // Set active step
-    document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
-    const stepEl = document.getElementById(`step-${i}`);
-    stepEl.classList.add('active');
 
-    // Simulate thinking
-    await delay(1500);
-    
-    addChatMessage(agent.id, mockResponses[i]);
-    addSummary(agent, mockResponses[i].substring(0, 50) + "...");
-    
-    stepEl.classList.remove('active');
-    stepEl.classList.add('done');
+    // 진행 표시
+    document.querySelectorAll('.step')
+      .forEach(el => el.classList.remove('active'));
+    const stepEl = document.getElementById(`step-${i}`);
+    if(stepEl) stepEl.classList.add('active');
+
+    // 에이전트 지침 가져오기
+    const guideEl = document.querySelector(
+      `.agent-card.${agent.id} .agent-guide`
+    );
+    const guide = guideEl?.value?.trim()
+      || `당신은 ${agent.name}입니다. 제시된 기획 아이디어를 전문가 관점에서 검토하세요.`;
+
+    // 입력 중 메시지
+    addChatMessage(agent.id, '입력 중...');
+
+    try {
+      const response = await callGemini(
+        guide,
+        `다음 기획 아이디어에 대해 전문가 의견을 제시해줘:\n\n${input}`
+      );
+
+      // 마지막 '입력 중...' 메시지 교체
+      const msgs = document.querySelectorAll(
+        `.chat-msg.msg-${agent.id}`
+      );
+      const lastMsg = msgs[msgs.length - 1];
+      if(lastMsg) {
+        lastMsg.querySelector('.chat-text').innerHTML =
+          response.replace(/\n/g, '<br>');
+      }
+
+      addSummary(agent, response.slice(0, 80) + '...');
+
+    } catch(err) {
+      const msgs = document.querySelectorAll(
+        `.chat-msg.msg-${agent.id}`
+      );
+      const lastMsg = msgs[msgs.length - 1];
+      if(lastMsg) {
+        lastMsg.querySelector('.chat-text').innerHTML =
+          `<span style="color:#f87171;">오류: ${err.message}</span>`;
+      }
+    }
+
+    if(stepEl) {
+      stepEl.classList.remove('active');
+      stepEl.classList.add('done');
+    }
   }
 
   btnStart.innerHTML = '<i class="fa-solid fa-check"></i> 회의 완료';
@@ -177,14 +249,43 @@ document.getElementById('btn-reset').addEventListener('click', () => {
 
 document.getElementById('btn-summary').addEventListener('click', async () => {
   const btn = document.getElementById('btn-summary');
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 요약 중...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 종합 중...';
   btn.disabled = true;
 
-  await delay(2000);
+  // 각 에이전트 발언 수집
+  const chatMsgs = document.querySelectorAll('.chat-msg');
+  let agentLogs = '';
+  chatMsgs.forEach(msg => {
+    const name = msg.querySelector('.chat-name')?.textContent || '';
+    const text = msg.querySelector('.chat-text')?.textContent || '';
+    agentLogs += `[${name}]: ${text}\n\n`;
+  });
 
-  addChatMessage('master', "최종 결정: 제안해주신 기획안을 바탕으로 시스템 비동기 처리 적용, 스토리라인 연계 이벤트 기획, 그리고 UX 플로우 개선을 우선순위로 두고 개발을 진행하겠습니다. 훌륭한 제안입니다.");
-  
-  btn.innerHTML = '<i class="fa-solid fa-crown"></i> 디렉터 최종 판단 완료';
+  const masterGuide = `당신은 수석 기획 디렉터입니다.
+앞선 에이전트들의 회의를 종합하여
+마크다운 형식의 회의록을 작성하세요.
+JSON 형식 절대 사용 금지.`;
+
+  try {
+    const masterResponse = await callGemini(
+      masterGuide,
+      `다음은 기획 회의 내용입니다.\n\n기획 안건: ${document.getElementById('agenda-input').value}\n\n${agentLogs}\n\n위 내용을 종합하여 최종 회의록을 작성해주세요.`
+    );
+
+    addChatMessage('master',
+      masterResponse.replace(/\n/g, '<br>')
+    );
+
+    btn.innerHTML = 
+      '<i class="fa-solid fa-crown"></i> 디렉터 최종 판단 완료';
+  } catch(err) {
+    addChatMessage('master',
+      `<span style="color:#f87171;">오류: ${err.message}</span>`
+    );
+    btn.innerHTML = 
+      '<i class="fa-solid fa-crown"></i> 오류 발생';
+    btn.disabled = false;
+  }
 });
 
 // Initialize on load
