@@ -318,10 +318,23 @@ body {
 .agent-card.con .agent-avatar { color: var(--tag-con-text); }
 .agent-card.ops .agent-avatar { color: var(--tag-ops-text); }
 
-.agent-info h4 {
+.agent-info .agent-name-input {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-main);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  outline: none;
+  width: 100%;
+  font-family: var(--font-sans);
+  padding: 2px 0;
+  transition: var(--transition);
+}
+
+.agent-info .agent-name-input:hover,
+.agent-info .agent-name-input:focus {
+  border-bottom-color: var(--text-secondary);
 }
 
 .agent-tag {

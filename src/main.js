@@ -9,6 +9,15 @@ const agents = [
 let currentStep = 0;
 let isMeeting = false;
 
+function updateStepIndicator() {
+  const stepIndicator = document.getElementById('step-indicator');
+  stepIndicator.innerHTML = agents.map((a, i) => `
+    <div class="step" id="step-${i}">
+      <div class="step-dot"></div> ${a.name}
+    </div>
+  `).join('');
+}
+
 function initAgents() {
   const container = document.getElementById('agents-container');
   container.innerHTML = agents.map(a => `
@@ -16,7 +25,7 @@ function initAgents() {
       <div class="agent-header">
         <div class="agent-avatar">${a.icon}</div>
         <div class="agent-info">
-          <h4>${a.name}</h4>
+          <input type="text" class="agent-name-input" data-id="${a.id}" value="${a.name}" />
           <span class="agent-tag">${a.tag}</span>
         </div>
       </div>
@@ -24,12 +33,18 @@ function initAgents() {
     </div>
   `).join('');
 
-  const stepIndicator = document.getElementById('step-indicator');
-  stepIndicator.innerHTML = agents.map((a, i) => `
-    <div class="step" id="step-${i}">
-      <div class="step-dot"></div> ${a.name}
-    </div>
-  `).join('');
+  document.querySelectorAll('.agent-name-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const agentId = e.target.dataset.id;
+      const agent = agents.find(a => a.id === agentId);
+      if (agent) {
+        agent.name = e.target.value;
+        updateStepIndicator();
+      }
+    });
+  });
+
+  updateStepIndicator();
 }
 
 function updateTime() {
