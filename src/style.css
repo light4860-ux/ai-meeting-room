@@ -544,6 +544,7 @@ body {
 /* Meeting Log */
 .meeting-log {
   flex: 1;
+  min-height: 0;
 }
 
 .chat-container {
@@ -553,6 +554,7 @@ body {
   flex-direction: column;
   gap: 20px;
   height: 100%;
+  min-height: 0;
 }
 
 .welcome-message {
@@ -719,7 +721,114 @@ body {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* Scrollbars */
+/* Result Button */
+.action-btn.result-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 10px;
+  font-size: 13px;
+  margin-top: 8px;
+  background: var(--bg-input);
+  color: #c8a83c;
+  border: 1px solid rgba(200, 168, 60, 0.3);
+}
+
+.action-btn.result-btn:hover {
+  background: var(--bg-hover);
+  border-color: rgba(200, 168, 60, 0.6);
+}
+
+/* Result Modal */
+.result-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 16, 20, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  visibility: visible;
+  transition: all 0.2s ease;
+}
+
+.result-modal-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.result-modal {
+  width: 760px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-premium);
+  border-radius: var(--radius-lg);
+}
+
+.result-modal-header {
+  flex-shrink: 0;
+}
+
+.result-modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.result-modal-body h1,
+.result-modal-body h2 {
+  color: #c8a83c;
+  font-size: 16px;
+  margin: 20px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.result-modal-body h3 {
+  color: var(--text-main);
+  font-size: 14px;
+  margin: 14px 0 6px;
+}
+
+.result-modal-body h4 {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 10px 0 4px;
+}
+
+.result-modal-body strong {
+  color: var(--text-main);
+}
+
+.result-modal-body ul,
+.result-modal-body ol {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+
+.result-modal-body li {
+  margin: 4px 0;
+}
+
+.result-modal-body p {
+  margin: 6px 0;
+}
+
+.result-modal-body hr {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 16px 0;
+}
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

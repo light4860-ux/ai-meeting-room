@@ -79,8 +79,8 @@
           <div class="panel-header">
             <h2><i class="fa-solid fa-comments"></i> 실시간 회의 로그</h2>
             <div class="log-actions">
-              <button class="icon-btn sm"><i class="fa-solid fa-download"></i></button>
-              <button class="icon-btn sm"><i class="fa-solid fa-expand"></i></button>
+              <button class="icon-btn sm" id="btn-download-log" title="회의 로그 다운로드"><i class="fa-solid fa-download"></i></button>
+              <button class="icon-btn sm" id="btn-expand-log" title="확장"><i class="fa-solid fa-expand"></i></button>
             </div>
           </div>
           <div class="chat-container" id="chat-container">
@@ -110,8 +110,29 @@
           <button class="action-btn master-btn disabled" id="btn-summary" disabled>
             <i class="fa-solid fa-crown"></i> 디렉터 최종 판단
           </button>
+          <button class="action-btn result-btn" id="btn-show-result" style="display:none;">
+            <i class="fa-solid fa-scroll"></i> 회의 결과 보기
+          </button>
         </div>
       </aside>
+
+    <!-- Result Modal -->
+    <div class="result-modal-overlay hidden" id="result-modal">
+      <div class="result-modal soft-panel">
+        <div class="result-modal-header panel-header">
+          <h2><i class="fa-solid fa-crown"></i> 회의 결과 요약</h2>
+          <button class="icon-btn sm" id="btn-close-result">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="result-modal-body" id="result-content">
+          <div class="empty-state">
+            <i class="fa-solid fa-hourglass-empty"></i>
+            <p>결과를 불러오는 중입니다...</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
     </main>
 

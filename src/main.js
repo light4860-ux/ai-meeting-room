@@ -215,6 +215,8 @@ async function startMeeting() {
   btnStart.innerHTML = '<i class="fa-solid fa-check"></i> 회의 완료';
   document.getElementById('btn-summary').disabled = false;
   document.getElementById('btn-summary').classList.remove('disabled');
+  document.getElementById('btn-show-result').style.display = 'flex';
+  resultCache = '';
   isMeeting = false;
 }
 
@@ -238,6 +240,8 @@ document.getElementById('btn-reset').addEventListener('click', () => {
   document.getElementById('btn-start').disabled = false;
   document.getElementById('btn-summary').disabled = true;
   document.getElementById('btn-summary').classList.add('disabled');
+  document.getElementById('btn-show-result').style.display = 'none';
+  resultCache = '';
   
   document.querySelectorAll('.step').forEach(el => {
     el.classList.remove('active');
@@ -342,4 +346,110 @@ btnSaveModal.addEventListener('click', () => {
   // Custom toast/alert can be used here
   alert('설정이 저장되었습니다.');
   closeModal();
+});
+// ── 회의 로그 다운로드 ──
+function downloadChatLog() {
+  const msgs = document.querySelectorAll('.chat-msg');
+  if(!msgs.length) { alert('다운로드할 회의 로그가 없습니다.'); return; }
+  let log = `DNF 기획 회의 로그\n일시: ${new Date().toLocaleString('ko-KR')}\n${'='.repeat(50)}\n\n`;
+  msgs.forEach(msg => {
+    const name = msg.querySelector('.chat-name')?.textContent || '';
+    const time = msg.querySelector('.chat-time')?.textContent || '';
+    const text = msg.querySelector('.chat-text')?.innerText || '';
+    log += `[${name}] ${time}\n${text}\n\n${'─'.repeat(40)}\n\n`;
+  });
+  const blob = new Blob([log], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `회의로그_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'').replace('.','')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+document.getElementById('btn-download-log')?.addEventListener('click', downloadChatLog);
+
+// ── 로그 확장 ──
+let isExpanded = false;
+document.getElementById('btn-expand-log')?.addEventListener('click', () => {
+  const meetingLog = document.querySelector('.meeting-log');
+  const btn = document.getElementById('btn-expand-log');
+  isExpanded = !isExpanded;
+  if(isExpanded) {
+    meetingLog.style.cssText = 'position:fixed;inset:16px;z-index:900;margin:0;border-radius:12px;';
+    btn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+  } else {
+    meetingLog.style.cssText = '';
+    btn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+  }
+});
+
+// ── 회의 결과 팝업 ──
+let resultCache = '';
+
+function markdownToHtml(md) {
+  return md
+    .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^---$/gm, '<hr>')
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    .replace(/\n/g, '<br>');
+}
+
+async function showResult() {
+  const modal = document.getElementById('result-modal');
+  const content = document.getElementById('result-content');
+  modal.classList.remove('hidden');
+  if(resultCache) { content.innerHTML = resultCache; return; }
+
+  content.innerHTML = '<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i><p>회의 결과 생성 중...</p></div>';
+
+  const msgs = document.querySelectorAll('.chat-msg');
+  if(!msgs.length) {
+    content.innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>회의 로그가 없습니다.</p></div>';
+    return;
+  }
+
+  let agentLogs = '';
+  msgs.forEach(msg => {
+    const name = msg.querySelector('.chat-name')?.textContent || '';
+    const text = msg.querySelector('.chat-text')?.innerText || '';
+    agentLogs += `[${name}]:\n${text}\n\n`;
+  });
+
+  const agenda = document.getElementById('agenda-input')?.value || '';
+  try {
+    const summary = await callGemini(
+      `당신은 수석 기획 디렉터입니다. 에이전트 회의 내용을 종합하여 아래 마크다운 형식으로 회의 결과를 작성하세요. JSON 절대 금지. 한국어. 결론만 나열하지 말고 논의 흐름이 보이도록 작성.
+
+# 📋 기획 회의 결과
+## 1. 회의 배경 및 목적
+## 2. 주요 논의 흐름
+### 아젠다 A: (논점)
+- **제기:**
+- **반론/보완:**
+- **결론:**
+## 3. 최종 확정 방향
+## 4. 기획서 핵심 포인트
+## 5. 개발 로드맵
+- **v1.0 MVP:**
+- **v2.0 확장:**
+## 6. 미결 사항`,
+      `기획 안건: ${agenda}\n\n${agentLogs}`
+    );
+    resultCache = markdownToHtml(summary);
+    content.innerHTML = resultCache;
+  } catch(err) {
+    content.innerHTML = `<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i><p>오류: ${err.message}</p></div>`;
+  }
+}
+
+document.getElementById('btn-show-result')?.addEventListener('click', showResult);
+document.getElementById('btn-close-result')?.addEventListener('click', () => {
+  document.getElementById('result-modal').classList.add('hidden');
+});
+document.getElementById('result-modal')?.addEventListener('click', (e) => {
+  if(e.target.id === 'result-modal') e.target.classList.add('hidden');
 });
