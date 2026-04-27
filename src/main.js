@@ -236,12 +236,16 @@ async function startMeeting() {
     const stepEl = document.getElementById(`step-${i}`);
     if(stepEl) stepEl.classList.add('active');
 
-    // 사이드바 사용자 입력 지침 확인 (비어있으면 기본 프롬프트 사용)
     const guideEl = document.querySelector(
       `.agent-card.${agent.id} .agent-guide`
     );
-    const userGuide = guideEl?.value?.trim();
-    const systemPrompt = userGuide || agentSystemPrompts[i];
+    const userGuide = guideEl?.value?.trim() || "";
+    
+    // 사용자가 입력한 지침을 기본 기조로 하되, 고도화된 보고 형식을 결합
+    const basePrompt = agentSystemPrompts[i];
+    const systemPrompt = userGuide 
+      ? `[기본 지침]\n${userGuide}\n\n[보고 형식 및 의무]\n${basePrompt}`
+      : basePrompt;
 
     // 이전 에이전트 의견 컨텍스트 구성
     let prevContext = '';
