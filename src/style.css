@@ -562,6 +562,10 @@ body {
   overflow: hidden;
 }
 
+.meeting-log > .panel-header {
+  flex-shrink: 0;
+}
+
 .chat-container {
   padding: 20px;
   overflow-y: auto;
@@ -570,6 +574,8 @@ body {
   gap: 20px;
   flex: 1;
   min-height: 0;
+  /* Bulletproof fallback for browsers that don't respect flex chain */
+  max-height: calc(100vh - 380px);
 }
 
 .welcome-message {
@@ -666,13 +672,17 @@ body {
 }
 
 .summary-content {
-  padding: 16px 20px;
+  padding: 16px 20px 8px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.summary-panel > .panel-header {
+  flex-shrink: 0;
 }
 
 .empty-state {

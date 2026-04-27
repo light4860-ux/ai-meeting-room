@@ -241,10 +241,10 @@ async function startMeeting() {
     );
     const userGuide = guideEl?.value?.trim() || "";
     
-    // 사용자가 입력한 지침을 기본 기조로 하되, 고도화된 보고 형식을 결합
+    // 구조화 형식이 반드시 우선 적용됨. 사용자 지침은 페르소나/관점만 보완.
     const basePrompt = agentSystemPrompts[i];
-    const systemPrompt = userGuide 
-      ? `[기본 지침]\n${userGuide}\n\n[보고 형식 및 의무]\n${basePrompt}`
+    const systemPrompt = userGuide
+      ? `[필수 보고 형식 - 절대 준수]\n${basePrompt}\n\n[추가 페르소나 및 관점 보완]\n아래 지침의 관점과 성격을 반영하되, 위의 구조화 리포트 형식과 견제 의무는 반드시 이행하라:\n${userGuide}`
       : basePrompt;
 
     // 이전 에이전트 의견 컨텍스트 구성
