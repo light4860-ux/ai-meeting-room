@@ -359,9 +359,6 @@ document.getElementById('btn-summary').addEventListener('click', async () => {
 ## ⚡ 3인 공통 합의 사항
 ## 🔥 3인 간 이견 및 논쟁점
 ## 🏁 최종 확정 방향
-## 📅 개발 로드맵
-- v1.0 MVP:
-- v2.0 확장:
 ## ⚠️ 미결 사항
 ## 💡 디렉터 최종 판단
 
@@ -535,10 +532,7 @@ async function showResult() {
 - **결론:**
 ## 3. 최종 확정 방향
 ## 4. 기획서 핵심 포인트
-## 5. 개발 로드맵
-- **v1.0 MVP:**
-- **v2.0 확장:**
-## 6. 미결 사항`,
+## 5. 미결 사항`,
       `기획 안건: ${agenda}\n\n${agentLogs}`
     );
     resultCache = markdownToHtml(summary);
