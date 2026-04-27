@@ -71,6 +71,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   padding: 16px 24px 24px 24px;
   gap: 20px;
 }
@@ -385,8 +387,8 @@ body {
   flex-direction: column;
   gap: 24px;
   min-width: 0;
-  min-height: 0; /* Allow shrinking to enable scrolling in children */
-  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .control-panel {
@@ -554,12 +556,13 @@ body {
 
 .chat-container {
   padding: 20px;
-  overflow-y: auto;
+  overflow-y: scroll;
   display: flex;
   flex-direction: column;
   gap: 20px;
   flex: 1;
   min-height: 0;
+  height: 0; /* force flex child to not grow beyond parent */
 }
 
 .welcome-message {
@@ -651,6 +654,8 @@ body {
 .summary-panel {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .summary-content {
@@ -725,6 +730,7 @@ body {
   padding: 16px 20px;
   background: var(--bg-surface);
   border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 /* Result Button */
