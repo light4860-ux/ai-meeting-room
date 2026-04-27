@@ -176,51 +176,105 @@ async function startMeeting() {
   document.getElementById('chat-container').innerHTML = '';
   document.getElementById('summary-content').innerHTML = '';
 
+  // 각 에이전트 응답을 수집하여 다음 에이전트가 참고할 수 있도록 저장
+  const agentResponses = [];
+
+  // 에이전트별 전문 시스템 프롬프트
+  const agentSystemPrompts = [
+    // 수석 시스템 기획자
+    `당신은 수석 시스템 기획자입니다. 게임 시스템 설계 및 밸런스, 데이터 구조, 어뷰징 방지 로직을 담당합니다.
+당신은 반드시 아래 형식의 구조화된 리포트를 한국어로 작성해야 합니다.
+
+① 이 기획이 필요한 이유 (구조적 관점)
+② 핵심 방향 및 A/B안 비교 (각 안에 대한 구체적 판단 근거 포함)
+③ 기획 시 반드시 짚어야 할 조건 분기 및 예외 처리
+④ 시스템 구조 관점의 리스크 지적 (최소 1개 이상 반드시 포함)
+⑤ 기획서 핵심 포인트
+
+[견제 의무]
+- 아젠다에서 구조적 결함이나 예외 처리 누락 부분을 반드시 지적할 것
+- 근거 없이 아이디어에 동의만 하는 것 금지
+- 모든 항목에 판단 근거를 명시할 것`,
+
+    // 콘텐츠 & 라이브 기획자
+    `당신은 콘텐츠 & 라이브 기획자입니다. 유저 경험, 콘텐츠 참여율, UI/UX 흐름, 보상 설계를 담당합니다.
+당신은 반드시 아래 형식의 구조화된 리포트를 한국어로 작성해야 합니다.
+
+① 필요성 (유저 경험 관점)
+② 유저 경험 방향 (A/B안 비교 포함 시 판단 근거 명시)
+③ 리스크 (운영 및 콘텐츠 관점)
+④ 수석 시스템 기획자 의견 중 콘텐츠/UX 관점에서의 동의 또는 반론
+⑤ 기획서 핵심 포인트
+
+[견제 의무]
+- 수석 시스템 기획자의 의견 중 유저 경험을 해칠 수 있는 부분을 반드시 지적할 것
+- 근거 없이 동의만 하는 것 금지
+- 미결 사항이 있다면 반드시 명시할 것`,
+
+    // 운영 & UX 담당자
+    `당신은 운영 & UX 담당자입니다. 유저 행동 패턴, 운영 지표, 시스템 남용 방지, 현장 피드백을 담당합니다.
+당신은 반드시 아래 형식의 구조화된 리포트를 한국어로 작성해야 합니다.
+
+① 필요성 (운영 관점)
+② 운영·UX 방향 (구체적 판단 근거 포함)
+③ 리스크 (운영 현장 관점)
+④ SYSTEM / CONTENT 의견 중 유저/운영 관점의 문제 지적
+⑤ 감수 가능한 리스크 여부 판단
+⑥ 기획서 핵심 포인트
+
+[견제 의무]
+- 앞선 두 에이전트가 놓친 운영 현장 리스크를 반드시 1개 이상 추가로 지적할 것
+- 근거 없는 동의 금지
+- 솔로 플레이 유저, 벌교(버퍼교환) 유저 등 특수 케이스를 반드시 고려할 것`
+  ];
+
   for (let i = 0; i < agents.length; i++) {
     const agent = agents[i];
 
-    // 진행 표시
     document.querySelectorAll('.step')
       .forEach(el => el.classList.remove('active'));
     const stepEl = document.getElementById(`step-${i}`);
     if(stepEl) stepEl.classList.add('active');
 
-    // 에이전트 지침 가져오기
+    // 사이드바 사용자 입력 지침 확인 (비어있으면 기본 프롬프트 사용)
     const guideEl = document.querySelector(
       `.agent-card.${agent.id} .agent-guide`
     );
-    const guide = guideEl?.value?.trim()
-      || `당신은 ${agent.name}입니다. 제시된 기획 아이디어를 전문가 관점에서 검토하세요.`;
+    const userGuide = guideEl?.value?.trim();
+    const systemPrompt = userGuide || agentSystemPrompts[i];
 
-    // 입력 중 메시지
-    addChatMessage(agent.id, '입력 중...');
+    // 이전 에이전트 의견 컨텍스트 구성
+    let prevContext = '';
+    if (agentResponses.length > 0) {
+      prevContext = '\n\n[이전 에이전트 의견 참고]\n';
+      agentResponses.forEach((r, idx) => {
+        prevContext += `\n--- ${agents[idx].name} 의견 ---\n${r}\n`;
+      });
+      prevContext += '\n위 내용을 참고하여, 동의하거나 반론할 부분을 명확히 구분하여 리포트를 작성하시오.';
+    }
+
+    addChatMessage(agent.id, '<i class="fa-solid fa-spinner fa-spin"></i> 분석 중...');
 
     try {
-      const response = await callGemini(
-        guide,
-        `다음 기획 아이디어에 대해 전문가 의견을 제시해줘:\n\n${input}`
-      );
+      const userMsg = `다음 기획 아이디어에 대해 당신의 전문 관점에서 구조화된 리포트를 작성하시오:\n\n[안건]\n${input}${prevContext}`;
+      const response = await callGemini(systemPrompt, userMsg);
 
-      // 마지막 '입력 중...' 메시지 교체
-      const msgs = document.querySelectorAll(
-        `.chat-msg.msg-${agent.id}`
-      );
+      agentResponses.push(response);
+
+      const msgs = document.querySelectorAll(`.chat-msg.msg-${agent.id}`);
       const lastMsg = msgs[msgs.length - 1];
       if(lastMsg) {
         lastMsg.querySelector('.chat-text').innerHTML =
           response.replace(/\n/g, '<br>');
-        
-        // 내용이 길어질 경우 자동 스크롤
         const chatContainer = document.getElementById('chat-container');
         chatContainer.scrollTop = chatContainer.scrollHeight;
       }
 
-      addSummary(agent, response.slice(0, 80) + '...');
+      addSummary(agent, response.slice(0, 100) + '...');
 
     } catch(err) {
-      const msgs = document.querySelectorAll(
-        `.chat-msg.msg-${agent.id}`
-      );
+      agentResponses.push(`[오류로 인한 응답 없음]`);
+      const msgs = document.querySelectorAll(`.chat-msg.msg-${agent.id}`);
       const lastMsg = msgs[msgs.length - 1];
       if(lastMsg) {
         lastMsg.querySelector('.chat-text').innerHTML =
@@ -231,6 +285,11 @@ async function startMeeting() {
     if(stepEl) {
       stepEl.classList.remove('active');
       stepEl.classList.add('done');
+    }
+
+    // 에이전트 간 간격 (API 부하 방지)
+    if (i < agents.length - 1) {
+      await delay(1000);
     }
   }
 
@@ -278,38 +337,60 @@ document.getElementById('btn-summary').addEventListener('click', async () => {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 종합 중...';
   btn.disabled = true;
 
-  // 각 에이전트 발언 수집
-  const chatMsgs = document.querySelectorAll('.chat-msg');
+  const chatMsgs = document.querySelectorAll('.chat-msg:not(.msg-master)');
   let agentLogs = '';
   chatMsgs.forEach(msg => {
     const name = msg.querySelector('.chat-name')?.textContent || '';
-    const text = msg.querySelector('.chat-text')?.textContent || '';
-    agentLogs += `[${name}]: ${text}\n\n`;
+    const text = msg.querySelector('.chat-text')?.innerText || '';
+    if (text && !text.includes('분석 중') && !text.includes('오류')) {
+      agentLogs += `[${name}]:\n${text}\n\n${'─'.repeat(40)}\n\n`;
+    }
   });
 
-  const masterGuide = `당신은 수석 기획 디렉터입니다.
-앞선 에이전트들의 회의를 종합하여
-마크다운 형식의 회의록을 작성하세요.
-JSON 형식 절대 사용 금지.`;
+  const masterGuide = `당신은 총괄 기획 디렉터입니다.
+3명의 전문 에이전트(수석 시스템 기획자, 콘텐츠 & 라이브 기획자, 운영 & UX 담당자)가 작성한 리포트를 종합하여
+아래 형식의 최종 회의록을 마크다운으로 작성하세요.
+
+# 📋 기획 회의 최종 결과
+## 🎯 회의 배경 및 목적
+## ✅ 에이전트별 핵심 의견 요약
+### 🔧 수석 시스템 기획자
+### 🏰 콘텐츠 & 라이브 기획자
+### 📊 운영 & UX 담당자
+## ⚡ 3인 공통 합의 사항
+## 🔥 3인 간 이견 및 논쟁점
+## 🏁 최종 확정 방향
+## 📅 개발 로드맵
+- v1.0 MVP:
+- v2.0 확장:
+## ⚠️ 미결 사항
+## 💡 디렉터 최종 판단
+
+규칙:
+- JSON 형식 절대 사용 금지
+- 한국어로 작성
+- 각 에이전트의 핵심 주장과 견제 의견을 정확히 반영할 것
+- 단순 나열이 아닌 논의 흐름이 보이도록 서술할 것`;
 
   try {
     const masterResponse = await callGemini(
       masterGuide,
-      `다음은 기획 회의 내용입니다.\n\n기획 안건: ${document.getElementById('agenda-input').value}\n\n${agentLogs}\n\n위 내용을 종합하여 최종 회의록을 작성해주세요.`
+      `기획 안건: ${document.getElementById('agenda-input').value}\n\n${agentLogs}\n\n위 내용을 종합하여 최종 회의록을 작성해주세요.`
     );
 
     addChatMessage('master',
       masterResponse.replace(/\n/g, '<br>')
     );
 
-    btn.innerHTML = 
-      '<i class="fa-solid fa-crown"></i> 디렉터 최종 판단 완료';
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    btn.innerHTML = '<i class="fa-solid fa-crown"></i> 디렉터 최종 판단 완료';
   } catch(err) {
     addChatMessage('master',
       `<span style="color:#f87171;">오류: ${err.message}</span>`
     );
-    btn.innerHTML = 
-      '<i class="fa-solid fa-crown"></i> 오류 발생';
+    btn.innerHTML = '<i class="fa-solid fa-crown"></i> 오류 발생';
     btn.disabled = false;
   }
 });
