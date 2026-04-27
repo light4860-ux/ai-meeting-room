@@ -48,14 +48,19 @@
   padding: 0;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
+  height: 100%;
+  overflow: hidden;
   background-color: var(--bg-base);
   color: var(--text-main);
   font-family: var(--font-sans);
   line-height: 1.5;
-  overflow-x: hidden;
   font-size: 14px;
-  /* Ambient Light Gradient from top-left */
   background-image: radial-gradient(
     circle at 10% -10%, 
     rgba(255, 84, 32, 0.12) 0%, 
@@ -183,7 +188,7 @@ body {
 .dashboard-layout {
   display: grid;
   grid-template-columns: 260px 1fr 300px;
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: 1fr;
   gap: 24px;
   flex: 1;
   min-height: 0;
@@ -552,17 +557,19 @@ body {
 .meeting-log {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .chat-container {
   padding: 20px;
-  overflow-y: scroll;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 20px;
   flex: 1;
   min-height: 0;
-  height: 0; /* force flex child to not grow beyond parent */
 }
 
 .welcome-message {
