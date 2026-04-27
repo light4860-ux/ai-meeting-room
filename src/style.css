@@ -200,6 +200,7 @@ body {
   flex-direction: column;
   overflow: hidden;
   box-shadow: var(--shadow-premium);
+  min-height: 0;
 }
 
 .panel-header {
@@ -555,7 +556,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 100%;
+  flex: 1;
   min-height: 0;
 }
 
@@ -653,6 +654,7 @@ body {
 .summary-content {
   padding: 16px 20px;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;

@@ -135,10 +135,11 @@ async function callGemini(systemPrompt, userMessage, retryCount = 0) {
       const err = await res.json().catch(() => ({}));
       const msg = err?.error?.message || res.statusText;
       
-      // 503 오류 발생 시 최대 3번 재시도 (1.5초 간격)
-      if (res.status === 503 && retryCount < 3) {
-        console.warn(`API 503 에러 발생. ${retryCount + 1}회차 재시도 중...`);
-        await delay(1500);
+      // 503 오류 발생 시 최대 5번 재시도 (지수 백오프: 2초, 4초, 6초...)
+      if (res.status === 503 && retryCount < 5) {
+        const waitTime = 2000 * (retryCount + 1);
+        console.warn(`API 503 에러 발생. ${waitTime/1000}초 후 ${retryCount + 1}회차 재시도 중...`);
+        await delay(waitTime);
         return callGemini(systemPrompt, userMessage, retryCount + 1);
       }
       
@@ -149,8 +150,9 @@ async function callGemini(systemPrompt, userMessage, retryCount = 0) {
     return data.candidates?.[0]?.content?.parts?.[0]?.text
       || '응답이 없습니다.';
   } catch (error) {
-    if (retryCount < 3 && (error.message.includes('503') || error.message.includes('fetch'))) {
-      await delay(1500);
+    if (retryCount < 5 && (error.message.includes('503') || error.message.includes('fetch'))) {
+      const waitTime = 2000 * (retryCount + 1);
+      await delay(waitTime);
       return callGemini(systemPrompt, userMessage, retryCount + 1);
     }
     throw error;
