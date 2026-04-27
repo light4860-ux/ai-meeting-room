@@ -99,7 +99,7 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function callGemini(systemPrompt, userMessage) {
+async function callGemini(systemPrompt, userMessage, retryCount = 0) {
   const apiKey = localStorage.getItem('dnf_gemini_key');
   const model = localStorage.getItem('dnf_gemini_model')
     || 'gemini-2.5-flash';
@@ -112,33 +112,49 @@ async function callGemini(systemPrompt, userMessage) {
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      system_instruction: {
-        parts: [{ text: systemPrompt }]
-      },
-      contents:[{
-        role: 'user',
-        parts: [{ text: userMessage }]
-      }],
-      generationConfig: {
-        maxOutputTokens: 4096,
-        temperature: 0.7
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        contents:[{
+          role: 'user',
+          parts: [{ text: userMessage }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 4096,
+          temperature: 0.7
+        }
+      })
+    });
+
+    if(!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      const msg = err?.error?.message || res.statusText;
+      
+      // 503 오류 발생 시 최대 3번 재시도 (1.5초 간격)
+      if (res.status === 503 && retryCount < 3) {
+        console.warn(`API 503 에러 발생. ${retryCount + 1}회차 재시도 중...`);
+        await delay(1500);
+        return callGemini(systemPrompt, userMessage, retryCount + 1);
       }
-    })
-  });
+      
+      throw new Error(`API 오류 (${res.status}): ${msg}`);
+    }
 
-  if(!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const msg = err?.error?.message || res.statusText;
-    throw new Error(`API 오류 (${res.status}): ${msg}`);
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text
+      || '응답이 없습니다.';
+  } catch (error) {
+    if (retryCount < 3 && (error.message.includes('503') || error.message.includes('fetch'))) {
+      await delay(1500);
+      return callGemini(systemPrompt, userMessage, retryCount + 1);
+    }
+    throw error;
   }
-
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text
-    || '응답이 없습니다.';
 }
 
 async function startMeeting() {
@@ -191,6 +207,10 @@ async function startMeeting() {
       if(lastMsg) {
         lastMsg.querySelector('.chat-text').innerHTML =
           response.replace(/\n/g, '<br>');
+        
+        // 내용이 길어질 경우 자동 스크롤
+        const chatContainer = document.getElementById('chat-container');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
       }
 
       addSummary(agent, response.slice(0, 80) + '...');
