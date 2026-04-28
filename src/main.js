@@ -480,69 +480,44 @@ if (btnCollapseSidebar) {
   });
 }
 
-// Settings Modal Logic
-const modalOverlay = document.getElementById('settings-modal');
-const btnSettings = document.getElementById('btn-settings');
+// Settings Modal Logic (v1.9.7 방식 - 단순하고 안정적)
 const btnCloseModal = document.getElementById('btn-close-modal');
 const btnCancelModal = document.getElementById('btn-cancel-modal');
 const btnSaveModal = document.getElementById('btn-save-modal');
 
 function openModal() {
-  if (modalOverlay) {
-    modalOverlay.classList.remove('hidden');
-    modalOverlay.style.display = 'flex';
-    try {
-      const savedKey = localStorage.getItem('dnf_gemini_key') || '';
-      const savedModel = localStorage.getItem('dnf_gemini_model') || 'gemini-2.5-flash';
-      const keyInput = document.getElementById('api-key-input');
-      const modelSelect = document.getElementById('model-select');
-      if (keyInput) keyInput.value = savedKey;
-      if (modelSelect) modelSelect.value = savedModel;
-    } catch(e) {
-      console.warn('Storage access blocked:', e);
-    }
-  }
+  const overlay = document.getElementById('settings-modal');
+  if (!overlay) return;
+  overlay.classList.remove('hidden');
+  overlay.style.display = 'flex';
+  try {
+    const keyInput = document.getElementById('api-key-input');
+    const modelSelect = document.getElementById('model-select');
+    if (keyInput) keyInput.value = localStorage.getItem('dnf_gemini_key') || '';
+    if (modelSelect) modelSelect.value = localStorage.getItem('dnf_gemini_model') || 'gemini-2.5-flash';
+  } catch(e) {}
 }
 
 function closeModal() {
-  if (modalOverlay) {
-    modalOverlay.classList.add('hidden');
-    modalOverlay.style.display = 'none'; // Force hide
-  }
-}
-
-if (btnSettings) {
-  btnSettings.addEventListener('click', (e) => {
-    e.preventDefault();
-    openModal();
-  });
+  const overlay = document.getElementById('settings-modal');
+  if (!overlay) return;
+  overlay.classList.add('hidden');
+  overlay.style.display = 'none';
 }
 
 if (btnCloseModal) btnCloseModal.addEventListener('click', closeModal);
 if (btnCancelModal) btnCancelModal.addEventListener('click', closeModal);
 
-// Click outside to close
-if (modalOverlay) {
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) {
-      closeModal();
-    }
-  });
-}
-
 if (btnSaveModal) {
   btnSaveModal.addEventListener('click', () => {
-    const apiKey = document.getElementById('api-key-input').value.trim();
-    const model = document.getElementById('model-select').value;
     try {
-      localStorage.setItem('dnf_gemini_key', apiKey);
-      localStorage.setItem('dnf_gemini_model', model);
-    } catch(e) {
-      console.warn('Storage access blocked:', e);
-    }
+      localStorage.setItem('dnf_gemini_key', document.getElementById('api-key-input').value.trim());
+      localStorage.setItem('dnf_gemini_model', document.getElementById('model-select').value);
+    } catch(e) {}
     alert('설정이 저장되었습니다.');
     closeModal();
   });
+}
 }
 // ── 회의 로그 다운로드 ──
 function downloadChatLog() {
@@ -647,4 +622,3 @@ document.getElementById('btn-close-result')?.addEventListener('click', () => {
 document.getElementById('result-modal')?.addEventListener('click', (e) => {
   if(e.target.id === 'result-modal') e.target.classList.add('hidden');
 });
-
