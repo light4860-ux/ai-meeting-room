@@ -1,18 +1,83 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-    <title>AI Meeting Room</title>
-    </head>
-    <body>
-      <div id="app">
-          <h1>AI Meeting Room</h1>
-              <div id="agents-container"></div>
-                  <textarea id="agenda-input"></textarea>
-                      <button id="btn-start">Start</button>
-                          <div id="chat-container"></div>
-                            </div>
-                              <script type="module" src="/src/main.js"></script>
-                              </body>
-                              </html>
-                              
+ <html lang="ko">
+ <head>
+ <meta charset="UTF-8" />
+ <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>🎮 AI 멀티 에이전트 기획 회의실</title>
+ <link rel="preconnect" href="https://fonts.googleapis.com">
+ <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@… rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+ </head>
+ <body>
+ <div id="app">
+ <header class="soft-header">
+ <div class="header-left">
+ <div class="logo-box"><i class="fa-solid fa-gamepad"></i></div>
+ <div class="title-container">
+ <h1 class="main-title">AI <span>MEETING ROOM</span></h1>
+ <span class="version-badge">v2.0 NEXT-GEN</span>
+ </div>
+ </div>
+ <div class="header-right">
+ <div class="status-indicator"><div class="pulse-dot"></div><span class="status-text">System Online</span></div>
+ <button class="icon-btn" id="btn-settings"><i class="fa-solid fa-gear"></i></button>
+ </div>
+ </header>
+ <main class="dashboard-layout">
+ <aside class="sidebar soft-panel" id="sidebar">
+ <div class="panel-header">
+ <h2><i class="fa-solid fa-users-rays"></i> <span>참여 에이전트</span></h2>
+ <button class="icon-btn sm" id="btn-collapse-sidebar"><i class="fa-solid fa-chevron-left"></i></button>
+ </div>
+ <div class="agents-container" id="agents-container"></div>
+ </aside>
+ <section class="center-stage">
+ <div class="control-panel soft-panel">
+ <div class="input-header">
+ <h3><i class="fa-solid fa-pen-nib"></i> 기획 안건 입력</h3>
+ <div class="input-actions">
+ <button class="action-btn outline" id="btn-attach"><i class="fa-solid fa-paperclip"></i> 첨부</button>
+ <input type="file" id="file-input" multiple style="display: none;" accept=".txt,.md,.js,.css,.html,.json">
+ </div>
+ </div>
+ <textarea id="agenda-input" class="agenda-textarea" placeholder="아이디어를 입력하세요..."></textarea>
+ <div id="attached-files-container" class="attached-files-container"></div>
+ <div class="execution-bar">
+ <div class="step-indicator" id="step-indicator"></div>
+ <div class="primary-actions">
+ <button class="action-btn danger" id="btn-reset">초기화</button>
+ <button class="action-btn primary glow" id="btn-start">회의 시작</button>
+ </div>
+ </div>
+ </div>
+ <div class="meeting-log soft-panel">
+ <div class="panel-header">
+ <h2>실시간 회의 로그</h2>
+ <div class="log-actions">
+ <button class="icon-btn sm" id="btn-download-log"><i class="fa-solid fa-download"></i></button>
+ </div>
+ </div>
+ <div class="chat-container" id="chat-container"></div>
+ </div>
+ </section>
+ <aside class="summary-panel soft-panel">
+ <div class="panel-header"><h2>핵심 요약</h2></div>
+ <div class="summary-content" id="summary-content"></div>
+ <div class="master-action">
+ <button class="action-btn master-btn" id="btn-summary" disabled>디렉터 최종 판단</button>
+ </div>
+ </aside>
+ </main>
+ <div class="result-modal-overlay hidden" id="result-modal">
+ <div class="result-modal soft-panel">
+ <div class="result-modal-body" id="result-content"></div>
+ </div>
+ </div>
+ <div class="modal-overlay hidden" id="settings-modal">
+ <!-- 설정 모달 생략 -->
+ </div>
+ </div>
+ <script type="module" src="/src/main.js"></script>
+ </body>
+ </html>
