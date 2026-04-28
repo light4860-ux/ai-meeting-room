@@ -1,121 +1,110 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Multi-Agent Meeting Room</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-<body>
-  <div id="app">
-    <header class="soft-header">
-      <div class="header-left">
-        <div class="logo-box">
-          <i class="fa-solid fa-gamepad"></i>
-        </div>
-        <div class="title-container">
-          <h1 class="main-title">AI <span>MEETING ROOM</span></h1>
-          <span class="version-badge">v2.0 NEXT-GEN</span>
-        </div>
-      </div>
-      <div class="header-right">
-        <div id="attached-files-container" class="file-tags"></div>
-        <button id="btn-attach" class="icon-btn" title="Attach Files">
-          <i class="fa-solid fa-paperclip"></i>
-        </button>
-        <button id="btn-settings" class="icon-btn" title="Settings">
-          <i class="fa-solid fa-gear"></i>
-        </button>
-      </div>
-    </header>
+import './style.css';
 
-    <main class="room-layout">
-      <section class="left-panel">
-        <div class="panel-header">
-          <h2><i class="fa-solid fa-users-gear"></i> Expert Agents</h2>
-        </div>
-        <div id="agents-container" class="agents-grid">
-          <!-- Agents will be injected here -->
-        </div>
-      </section>
+const agents =[
+  { id: 'sys', name: 'System Planner', tag: 'SYSTEM', icon: '<i class="fa-solid fa-gamepad"></i>', desc: 'Core systems and balance.' },
+    { id: 'con', name: 'Content Planner', tag: 'CONTENT', icon: '<i class="fa-solid fa-chess-knight"></i>', desc: 'Events and story.' },
+      { id: 'ops', name: 'UX & Ops', tag: 'OPS', icon: '<i class="fa-solid fa-chart-line"></i>', desc: 'User experience and metrics.' }
+      ];
+      
+      let isMeeting = false;
+      
+      function updateStepIndicator() {
+          const stepIndicator = document.getElementById('step-indicator');
+            if(!stepIndicator) return;
+              stepIndicator.innerHTML = agents.map((a, i) => `
+                  <div class="step" id="step-${i}">
+                          <div class="step-dot"></div> ${a.name}
+                  </div>
+                    `).join('');
+                    }
+                    
+                    function initAgents() {
+                        const container = document.getElementById('agents-container');
+                          if(!container) return;
+                            container.innerHTML = agents.map(a => `
+                                <div class="agent-card ${a.id}">
+                                        <div class="agent-header">
+                                                  <div class="agent-avatar">${a.icon}</div>
+                                                          <div class="agent-info">
+                                                                      <input type="text" class="agent-name-input" data-id="${a.id}" value="${a.name}" />
+                                                                                <span class="agent-tag">${a.tag}</span>
+                                                          </div>
+                                                                </div>
+                                                                      <textarea class="agent-guide" placeholder="Enter guide..."></textarea>
+                                                              </div>
+                                                                `).join('');
+                                                                  updateStepIndicator();
+                                                                  }
+                                                                  
+                                                                  function addChatMessage(agentId, message) {
+                                                                      const container = <document class="getElement">  if(!container) return;
+                                                                          const agent = agents.find(a => a.id === agentId) || { name: 'Master', icon: '<i class="fa-solid fa-crown"></i>' };
+                                                                            const msgHTML = `
+                                                                                <div class="chat-msg msg-${agentId}">
+                                                                                        <div class="chat-avatar">${agent.icon}</div>
+                                                                                              <div class="chat-content">
+                                                                                                        <div class="chat-meta"><span class="chat-name">${agent.name}</span></div>
+                                                                                                                <div class="chat-text">${message}</div>
+                                                                                              </div>
+                                                                                            </div>
+                                                                                              `;
+                                                                                                container.insertAdjacentHTML('beforeend', msgHTML);
+                                                                                                  container.scrollTop = container.scrollHeight;
+                                                                                                  }
 
-      <section class="center-panel">
-        <div id="chat-container" class="chat-viewport">
-          <div class="welcome-msg">
-            <i class="fa-solid fa-comments"></i>
-            <p>Ready to start the expert meeting? Enter your agenda below.</p>
-          </div>
-        </div>
-        
-        <div class="input-area">
-          <div class="input-wrapper">
-            <input type="text" id="agenda-input" placeholder="Enter meeting agenda (e.g. Discussing the new feature design...)" autocomplete="off">
-            <button id="btn-start" class="primary-btn">
-              <i class="fa-solid fa-play"></i> Start Meeting
-            </button>
-            <button id="btn-reset" class="secondary-btn" title="Reset">
-              <i class="fa-solid fa-rotate-right"></i>
-            </button>
-          </div>
-        </div>
-      </section>
+                                                                                                  async function callGemini(systemPrompt, userMessage) {
+                                                                                                      const apiKey = localStorage.getItem('dnf_gemini_key');
+                                                                                                        const model = localStorage.getItem('dnf_gemini_model') || 'gemini-2.5-flash';
+                                                                                                          if(!apiKey) throw new Error('API Key missing. Please set it in settings.');
+                                                                                                            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                                                                                                              const res = await fetch(url, {
+                                                                                                                    method: 'POST',
+                                                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                                                            body: <JSON class="stri">      system_instruction: { parts: [{ text: systemPrompt }] },
+                                                                                                                                    contents:[{ role: 'user', parts: [{ text: userMessage }] }]
+                                                                                                                                        })
+                                                                                                                                          });
+                                                                                                                                            const data = await res.json();
+                                                                                                                                              return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.';
+                                                                                                                                              }
 
-      <section class="right-panel">
-        <div class="panel-header">
-          <h2><i class="fa-solid fa-file-invoice"></i> Live Summary</h2>
-          <button id="btn-summary" class="mini-btn">Full Report</button>
-        </div>
-        <div id="summary-content" class="summary-body">
-          <div class="empty-state">Waiting for meeting to start...</div>
-        </div>
-      </section>
-    </main>
-  </div>
+                                                                                                                                              async function startMeeting() {
+                                                                                                                                                  const input = document.getElementById('agenda-input').value.trim();
+                                                                                                                                                    if (!input || isMeeting) return;
+                                                                                                                                                      isMeeting = true;
+                                                                                                                                                        document.getElementById('chat-container').innerHTML = '';
+                                                                                                                                                          for (let i = 0; i < agents.length; i++) {
+                                                                                                                                                                const agent = agents[i];
+                                                                                                                                                                    addChatMessage(agent.id, 'Analyzing...');
+                                                                                                                                                                        try {
+                                                                                                                                                                                const response = await callGemini(`You are ${agent.name}.`, input);
+                                                                                                                                                                                      const msgs = document.querySelectorAll(`.chat-msg.msg-${agent.id}`);
+                                                                                                                                                                                            msgs[msgs.length - 1].querySelector('.chat-text').innerText = response;
+                                                                                                                                                                                                } catch(e) {
+                                                                                                                                                                                                        const msgs = document.querySelectorAll(`.chat-msg.msg-${agent.id}`);
+                                                                                                                                                                                                              msgs[msgs.length - 1].querySelector('.chat-text').innerText = 'Error: ' + e.message;
+                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                    }
+                                                                                                                                                                                                                      isMeeting = false;
+                                                                                                                                                                                                                      }
 
-  <!-- Hidden File Input -->
-  <input type="file" id="file-input" multiple style="display: none;">
+                                                                                                                                                                                                                      document.getElementById('btn-start')?.addEventListener('click', startMeeting);
+                                                                                                                                                                                                                      document.getElementById('btn-settings')?.addEventListener('click', () => {
+                                                                                                                                                                                                                          const key = prompt('Enter Gemini API Key:');
+                                                                                                                                                                                                                            if(key) localStorage.setItem('dnf_gemini_key', key);
+                                                                                                                                                                                                                            });
 
-  <!-- Modals -->
-  <div id="settings-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-gears"></i> Project Settings</h3>
-        <button class="close-modal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Gemini API Key</label>
-          <input type="password" id="api-key-input" placeholder="Enter your API key">
-        </div>
-        <div class="form-group">
-          <label>Model Selection</label>
-          <select id="model-select">
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fast)</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Reasoning)</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="btn-save-modal" class="primary-btn">Save Changes</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="result-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content wide">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-square-poll-vertical"></i> Meeting Report</h3>
-        <button id="btn-close-result" class="close-modal">&times;</button>
-      </div>
-      <div id="result-content" class="modal-body markdown-body">
-        <!-- Result content will be injected here -->
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="/src/main.js"></script>
-</body>
-</html>
+                                                                                                                                                                                                                            initAgents();
+                                                                                                                                                                                                                            
+                                                                                                                                                                                                                      })
+                                                                                                                                                                                                }
+                                                                                                                                                                        }
+                                                                                                                                                          }
+                                                                                                                                              }
+                                                                                                                            </JSON>
+                                                                                                              })
+                                                                                                  }
+                                                                      </document>
+                                                                  })
+                    })
+      }]
