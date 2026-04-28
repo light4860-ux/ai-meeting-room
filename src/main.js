@@ -9,6 +9,7 @@ const agents =[
 let currentStep = 0;
  let isMeeting = false;
  let attachedFiles = []; // { name: string, content: string }
+ let resultCache = '';
 
 function updateStepIndicator() {
  const stepIndicator = document.getElementById('step-indicator');
@@ -168,17 +169,50 @@ async function startMeeting() {
 
  const agentResponses = [];
  const agentSystemPrompts = [
- `당신은 수석 시스템 기획자입니다...`, // 생략 가능하지만 전체 코드가 필요함
- `당신은 콘텐츠 기획자입니다...`,
- `당신은 UX 담당자입니다...`
+ `당신은 DNF 파티 플레이 명예 투표 시스템 담당 수석 시스템 기획자다.\n시스템 구조, 조건 분기, 점수 계산 로직, 예외 처리 관점에서 의견을 제시한다.`,
+ `당신은 DNF 파티 플레이 명예 투표 시스템 담당 콘텐츠 & 라이브 기획자다.\n유저 경험, 참여 동기, 보상 설계 관점에서 의견을 제시한다.`,
+ `당신은 DNF 파티 플레이 명예 투표 시스템 담당 운영 & UX 담당자다.\n커뮤니티 반응 예측, UI 정합성, CS 이슈 관점에서 의견을 제시한다.`
  ];
 
- // ... (중략 - 로컬 파일을 복사하는 것이 가장 좋습니다)
+ for (let i = 0; i < agents.length; i++) {
+ const agent = agents[i];
+ document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+ const stepEl = document.getElementById(`step-${i}`);
+ if(stepEl) stepEl.classList.add('active');
 
- // 회의 로직 생략 (실제 파일에는 포함되어 있습니다)
+ const guideEl = document.querySelector(`.agent-card.${agent.id} .agent-guide`);
+ const userGuide = guideEl?.value?.trim() || "";
+ const systemPrompt = userGuide ? `${agentSystemPrompts[i]}\n\n[추가 지침]\n${userGuide}` : agentSystemPrompts[i];
+
+ let prevContext = '';
+ if (agentResponses.length > 0) {
+ prevContext = '\n\n[이전 에이전트 의견 참고]\n' + agentResponses.map((r, idx) => `--- ${agents[idx].name} 의견 ---\n${r}`).join('\n');
  }
 
-// Settings Modal Logic (핵심 수정 부분)
+ addChatMessage(agent.id, '<i class="fa-solid fa-spinner fa-spin"></i> 분석 중...');
+
+ try {
+ const response = await callGemini(systemPrompt, `안건: ${fullAgenda}\n${prevContext}`);
+ agentResponses.push(response);
+ const msgs = document.querySelectorAll(`.chat-msg.msg-${agent.id}`);
+ const lastMsg = msgs[msgs.length - 1];
+ if(lastMsg) lastMsg.querySelector('.chat-text').innerHTML = response.replace(/\n/g, '<br>');
+ addSummary(agent, response.slice(0, 100) + '...');
+ } catch(err) {
+ addChatMessage(agent.id, `오류: ${err.message}`);
+ }
+
+ if(stepEl) { stepEl.classList.remove('active'); stepEl.classList.add('done'); }
+ await delay(1000);
+ }
+
+ btnStart.innerHTML = '<i class="fa-solid fa-check"></i> 회의 완료';
+ document.getElementById('btn-summary').disabled = false;
+ document.getElementById('btn-summary').classList.remove('disabled');
+ isMeeting = false;
+ }
+
+// Settings Modal Logic
  const modalOverlay = document.getElementById('settings-modal');
  const btnSettings = document.getElementById('btn-settings');
  const btnCloseModal = document.getElementById('btn-close-modal');
@@ -215,5 +249,45 @@ if (btnSettings) btnSettings.addEventListener('click', openModal);
  });
  }
 
+// Attachment Logic
+ const btnAttach = document.getElementById('btn-attach');
+ const fileInput = document.getElementById('file-input');
+ const attachedFilesContainer = document.getElementById('attached-files-container');
+
+if (btnAttach) btnAttach.addEventListener('click', () => fileInput.click());
+ if (fileInput) fileInput.addEventListener('change', async (e) => {
+ const files = Array.from(e.target.files);
+ for (const file of files) {
+ if (attachedFiles.some(f => f.name === file.name)) continue;
+ const content = await new Promise(resolve => {
+ const reader = new FileReader();
+ reader.onload = (ev) => resolve(ev.target.result);
+ reader.readAsText(file);
+ });
+ attachedFiles.push({ name: file.name, content });
+ }
+ renderAttachedFiles();
+ fileInput.value = '';
+ });
+
+function renderAttachedFiles() {
+ if (!attachedFilesContainer) return;
+ attachedFilesContainer.innerHTML = attachedFiles.map((file, index) => `
+ <div class="file-tag">
+ <i class="fa-solid fa-file-lines"></i>
+ <span>${file.name}</span>
+ <i class="fa-solid fa-xmark btn-remove-file" data-index="${index}"></i>
+ </div>
+ `).join('');
+ document.querySelectorAll('.btn-remove-file').forEach(btn => {
+ btn.addEventListener('click', (e) => {
+ attachedFiles.splice(parseInt(e.target.dataset.index), 1);
+ renderAttachedFiles();
+ });
+ });
+ }
+
+document.getElementById('btn-start')?.addEventListener('click', startMeeting);
+ document.getElementById('btn-reset')?.addEventListener('click', () => location.reload());
+
 initAgents();
- // 나머지 이벤트 리스너들 생략...
