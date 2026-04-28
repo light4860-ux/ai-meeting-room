@@ -490,15 +490,17 @@ const btnSaveModal = document.getElementById('btn-save-modal');
 function openModal() {
   if (modalOverlay) {
     modalOverlay.classList.remove('hidden');
-    modalOverlay.style.display = 'flex'; // Force display
-    const savedKey = localStorage.getItem('dnf_gemini_key') || '';
-    const savedModel = localStorage.getItem('dnf_gemini_model') || 'gemini-2.5-flash';
-   
-    const keyInput = document.getElementById('api-key-input');
-    const modelSelect = document.getElementById('model-select');
-   
-    if (keyInput) keyInput.value = savedKey;
-    if (modelSelect) modelSelect.value = savedModel;
+    modalOverlay.style.display = 'flex';
+    try {
+      const savedKey = localStorage.getItem('dnf_gemini_key') || '';
+      const savedModel = localStorage.getItem('dnf_gemini_model') || 'gemini-2.5-flash';
+      const keyInput = document.getElementById('api-key-input');
+      const modelSelect = document.getElementById('model-select');
+      if (keyInput) keyInput.value = savedKey;
+      if (modelSelect) modelSelect.value = savedModel;
+    } catch(e) {
+      console.warn('Storage access blocked:', e);
+    }
   }
 }
 
@@ -532,10 +534,12 @@ if (btnSaveModal) {
   btnSaveModal.addEventListener('click', () => {
     const apiKey = document.getElementById('api-key-input').value.trim();
     const model = document.getElementById('model-select').value;
-   
-    localStorage.setItem('dnf_gemini_key', apiKey);
-    localStorage.setItem('dnf_gemini_model', model);
-   
+    try {
+      localStorage.setItem('dnf_gemini_key', apiKey);
+      localStorage.setItem('dnf_gemini_model', model);
+    } catch(e) {
+      console.warn('Storage access blocked:', e);
+    }
     alert('설정이 저장되었습니다.');
     closeModal();
   });
@@ -643,3 +647,4 @@ document.getElementById('btn-close-result')?.addEventListener('click', () => {
 document.getElementById('result-modal')?.addEventListener('click', (e) => {
   if(e.target.id === 'result-modal') e.target.classList.add('hidden');
 });
+
